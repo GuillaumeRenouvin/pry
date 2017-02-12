@@ -1,0 +1,8 @@
+machine:
+  node:
+    version: 6.7.0
+
+dependencies:
+  override:
+    - rm -rf vendor/bundle
+    - npm install
