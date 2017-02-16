@@ -155,12 +155,12 @@ setInterval(function() {
       return status.commit;
     });
 
-    if (_.difference(newCommits, previousCommits).length !== 0) {
-      setBip(true);
-      setTimeout(function() {
-        setBip(false);
-      }, 2000);
-    }
+    // if (_.difference(newCommits, previousCommits).length !== 0) {
+    //   setBip(true);
+    //   setTimeout(function() {
+    //     setBip(false);
+    //   }, 2000);
+    // }
 
     previousCommits = newCommits;
     setLeds(statusArray);
