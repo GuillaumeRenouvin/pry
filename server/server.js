@@ -16,9 +16,9 @@ var gpio = require('pi-gpio');
 var STATUS = require('./constants/status');
 var URLS = require('./constants/urls');
 var gpiosLedArray = [
-  {red: 1, green: 2},
-  {red: 3, green: 4},
-  {red: 5, green: 6},
+  {red: 18, green: 23},
+  {red: 24, green: 25},
+  {red: 12, green: 16},
 ];
 var gpioBip = 7;
 
