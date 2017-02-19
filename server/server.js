@@ -167,16 +167,16 @@ setInterval(function() {
   3000
 );
 
-// app.get('/commits', function(req, res) {
-//   bluebird.all([
-//     getGithubPR(optionsGithub),
-//     getCircleCiBuilds(optionsCircleCi),
-//   ]).then(function(responses) {
-//     var statusArray = _.intersectionBy(responses[1], responses[0], 'commit');
-//     res.write(JSON.stringify(statusArray));
-//     res.end();
-//   });
-// });
+app.get('/commits', function(req, res) {
+  bluebird.all([
+    getGithubPR(optionsGithub),
+    getCircleCiBuilds(optionsCircleCi),
+  ]).then(function(responses) {
+    var statusArray = _.intersectionBy(responses[1], responses[0], 'commit');
+    res.write(JSON.stringify(statusArray));
+    res.end();
+  });
+});
 
 boot(app, __dirname, function(err) {
   if (err) throw err;
