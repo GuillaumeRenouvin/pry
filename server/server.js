@@ -25,8 +25,12 @@ var gpioBip = 7;
 // INIT GPIO
 gpio.setMode(gpio.MODE_BCM);
 _.each(gpiosLedArray, function(gpiosLed) {
-  gpio.setup(gpiosLed.red, gpio.DIR_OUT);
-  gpio.setup(gpiosLed.green, gpio.DIR_OUT);
+  gpio.setup(gpiosLed.red, gpio.DIR_OUT, function() {
+    gpio.write(gpiosLed.red, true);
+  });
+  gpio.setup(gpiosLed.green, gpio.DIR_OUT, function() {
+    gpio.write(gpiosLed.green, true);
+  });
 });
 
 var optionsGithub = {
@@ -92,39 +96,39 @@ var getCircleCiBuilds = function(optionsCircleCi) {
 };
 
 // GPIO
-var setLed = function(gpio, status) {
+var setLed = function(pin, status) {
   switch (status) {
     case STATUS.SUCCESS:
-      gpio.write(gpio.green, false);
-      gpio.write(gpio.red, true);
+      gpio.write(pin.green, false);
+      gpio.write(pin.red, true);
       break;
-    case STATUS.FAIL:
-      gpio.write(gpio.green, true);
-      gpio.write(gpio.red, false);
+    case STATUS.FAILED:
+      gpio.write(pin.green, true);
+      gpio.write(pin.red, false);
       break;
     case STATUS.RUNNING:
-      gpio.write(gpio.green, false);
-      gpio.write(gpio.red, false);
+      gpio.write(pin.green, false);
+      gpio.write(pin.red, false);
       break;
-    case STATUS.EMTY:
-      gpio.write(gpio.green, true);
-      gpio.write(gpio.red, true);
+    case STATUS.EMPTY:
+      gpio.write(pin.green, true);
+      gpio.write(pin.red, true);
       break;
   }
 };
 
 var setLeds = function(statusArray) {
-  var gpioIndex = gpiosLedArray.length;
   _.each(statusArray, function(status, index) {
     if (index > gpiosLedArray.length) { return false; }
+    console.log(status.build, index);
     switch (status.build) {
       case STATUS.NO_TESTS:
       case STATUS.FIXED:
       case STATUS.SUCCESS:
         setLed(gpiosLedArray[index], STATUS.SUCCESS);
         break;
-      case STATUS.FAIL:
-        setLed(gpiosLedArray[index], STATUS.FAIL);
+      case STATUS.FAILED:
+        setLed(gpiosLedArray[index], STATUS.FAILED);
         break;
       case STATUS.RUNNING:
         setLed(gpiosLedArray[index], STATUS.RUNNING);
@@ -132,7 +136,8 @@ var setLeds = function(statusArray) {
     };
   });
 
-  for (var i = gpioIndex; i < gpiosLedArray.length; i++) {
+  for (var i = statusArray.length; i < gpiosLedArray.length; i++) {
+    console.log('empty', i);
     setLed(gpiosLedArray[i], STATUS.EMPTY);
   }
 };
@@ -178,10 +183,18 @@ app.get('/commits', function(req, res) {
   });
 });
 
+process.on('SIGINT', function() {
+  gpio.destroy(function() {
+    console.log('All pins unexported');
+    process.exit();
+  });
+});
+
 boot(app, __dirname, function(err) {
   if (err) throw err;
 
   // start the server if `$ node server.js`
-  if (require.main === module)
+  if (require.main === module) {
     app.start();
+  }
 });
