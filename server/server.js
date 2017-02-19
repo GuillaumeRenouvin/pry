@@ -10,7 +10,7 @@ var fs = require('fs');
 var https = require('https');
 var request = bluebird.promisifyAll(require('request'), {multiArgs: true});
 var _ = require('lodash');
-var gpio = require('pi-gpio');
+var gpio = require('rpi-gpio');
 
 // VARIABLE
 var STATUS = require('./constants/status');
@@ -21,6 +21,13 @@ var gpiosLedArray = [
   {red: 12, green: 16},
 ];
 var gpioBip = 7;
+
+// INIT GPIO
+gpio.setMode(gpio.MODE_BCM);
+_.each(gpiosLedArray, function(gpiosLed) {
+  gpio.setup(gpiosLed.red, gpio.DIR_OUT);
+  gpio.setup(gpiosLed.green, gpio.DIR_OUT);
+});
 
 var optionsGithub = {
   url: URLS.GITHUB + config.user + '/' + config.repo + '/pulls?state=open',
@@ -85,62 +92,53 @@ var getCircleCiBuilds = function(optionsCircleCi) {
 };
 
 // GPIO
-var writeGpio = function(gpio, bool) {
-  gpio.open(gpio, 'output', function(err) {
-    gpio.write(gpio, bool, function() {
-      gpio.close(gpio);
-    });
-  });
-};
-
 var setLed = function(gpio, status) {
   switch (status) {
     case STATUS.SUCCESS:
-      writeGpio(gpio.green, true);
-      writeGpio(gpio.red, false);
+      gpio.write(gpio.green, false);
+      gpio.write(gpio.red, true);
       break;
     case STATUS.FAIL:
-      writeGpio(gpio.green, false);
-      writeGpio(gpio.red, true);
+      gpio.write(gpio.green, true);
+      gpio.write(gpio.red, false);
       break;
     case STATUS.RUNNING:
-      writeGpio(gpio.green, true);
-      writeGpio(gpio.red, true);
+      gpio.write(gpio.green, false);
+      gpio.write(gpio.red, false);
       break;
     case STATUS.EMTY:
-      writeGpio(gpio.green, false);
-      writeGpio(gpio.red, false);
+      gpio.write(gpio.green, true);
+      gpio.write(gpio.red, true);
       break;
   }
 };
 
 var setLeds = function(statusArray) {
-  var gpioIndex = 0;
+  var gpioIndex = gpiosLedArray.length;
   _.each(statusArray, function(status, index) {
-    if (gpioIndex > gpiosLedArray.length) { return false; }
+    if (index > gpiosLedArray.length) { return false; }
     switch (status.build) {
       case STATUS.NO_TESTS:
       case STATUS.FIXED:
       case STATUS.SUCCESS:
-        setLed(gpiosLedArray[gpioIndex], STATUS.SUCCESS);
+        setLed(gpiosLedArray[index], STATUS.SUCCESS);
         break;
       case STATUS.FAIL:
-        setLed(gpiosLedArray[gpioIndex], STATUS.FAIL);
+        setLed(gpiosLedArray[index], STATUS.FAIL);
         break;
       case STATUS.RUNNING:
-        setLed(gpiosLedArray[gpioIndex], STATUS.RUNNING);
+        setLed(gpiosLedArray[index], STATUS.RUNNING);
         break;
     };
-    gpioIndex = gpioIndex + 1;
   });
 
-  for (var i = gpioIndex; i < 3; i++) {
+  for (var i = gpioIndex; i < gpiosLedArray.length; i++) {
     setLed(gpiosLedArray[i], STATUS.EMPTY);
   }
 };
 
 var setBip = function(bool) {
-  writeGpio(gpioBip, bool);
+  gpio.write(gpioBip, bool);
 };
 
 // ROUTES
