@@ -172,17 +172,6 @@ setInterval(function() {
   3000
 );
 
-app.get('/commits', function(req, res) {
-  bluebird.all([
-    getGithubPR(optionsGithub),
-    getCircleCiBuilds(optionsCircleCi),
-  ]).then(function(responses) {
-    var statusArray = _.intersectionBy(responses[1], responses[0], 'commit');
-    res.write(JSON.stringify(statusArray));
-    res.end();
-  });
-});
-
 process.on('SIGINT', function() {
   gpio.destroy(function() {
     console.log('All pins unexported');
