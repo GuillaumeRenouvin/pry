@@ -15,21 +15,14 @@ var gpio = require('rpi-gpio');
 // VARIABLE
 var STATUS = require('./constants/status');
 var URLS = require('./constants/urls');
-var gpiosLedArray = [
-  {red: 18, green: 23},
-  {red: 24, green: 25},
-  {red: 12, green: 16},
-];
+var gpiosLedArray = [ 18, 24, 12];
 var gpioBip = 7;
 
 // INIT GPIO
 gpio.setMode(gpio.MODE_BCM);
 _.each(gpiosLedArray, function(gpiosLed) {
-  gpio.setup(gpiosLed.red, gpio.DIR_OUT, function() {
+  gpio.setup(gpiosLed gpio.DIR_OUT, function() {
     gpio.write(gpiosLed.red, true);
-  });
-  gpio.setup(gpiosLed.green, gpio.DIR_OUT, function() {
-    gpio.write(gpiosLed.green, true);
   });
 });
 
@@ -99,20 +92,10 @@ var getCircleCiBuilds = function(optionsCircleCi) {
 var setLed = function(pin, status) {
   switch (status) {
     case STATUS.SUCCESS:
-      gpio.write(pin.green, false);
-      gpio.write(pin.red, true);
+      gpio.write(pin, false);
       break;
-    case STATUS.FAILED:
-      gpio.write(pin.green, true);
-      gpio.write(pin.red, false);
-      break;
-    case STATUS.RUNNING:
-      gpio.write(pin.green, false);
-      gpio.write(pin.red, false);
-      break;
-    case STATUS.EMPTY:
-      gpio.write(pin.green, true);
-      gpio.write(pin.red, true);
+    case STATUS.FAILURE:
+      gpio.write(pin, true);
       break;
   }
 };
@@ -120,7 +103,6 @@ var setLed = function(pin, status) {
 var setLeds = function(statusArray) {
   _.each(statusArray, function(status, index) {
     if (index > gpiosLedArray.length) { return false; }
-    console.log(status.build, index);
     switch (status.build) {
       case STATUS.NO_TESTS:
       case STATUS.FIXED:
@@ -128,17 +110,14 @@ var setLeds = function(statusArray) {
         setLed(gpiosLedArray[index], STATUS.SUCCESS);
         break;
       case STATUS.FAILED:
-        setLed(gpiosLedArray[index], STATUS.FAILED);
-        break;
       case STATUS.RUNNING:
-        setLed(gpiosLedArray[index], STATUS.RUNNING);
+        setLed(gpiosLedArray[index], STATUS.FAILURE);
         break;
     };
   });
 
   for (var i = statusArray.length; i < gpiosLedArray.length; i++) {
-    console.log('empty', i);
-    setLed(gpiosLedArray[i], STATUS.EMPTY);
+    setLed(gpiosLedArray[i], STATUS.FAILURE);
   }
 };
 
@@ -171,17 +150,6 @@ setInterval(function() {
 },
   3000
 );
-
-app.get('/commits', function(req, res) {
-  bluebird.all([
-    getGithubPR(optionsGithub),
-    getCircleCiBuilds(optionsCircleCi),
-  ]).then(function(responses) {
-    var statusArray = _.intersectionBy(responses[1], responses[0], 'commit');
-    res.write(JSON.stringify(statusArray));
-    res.end();
-  });
-});
 
 process.on('SIGINT', function() {
   gpio.destroy(function() {
