@@ -6,19 +6,23 @@ var _ = require('lodash');
 var STATUS = require('../constants/status');
 
 var gpiosLedArray = [
-  {red: 18, green: 23, blue:24},
-  {red: 25, green: 12, blue:16},
+  {red: 12, green: 16, blue:18},
+  {red: 22, green: 32, blue:36},
+  {red: 11, green: 13, blue:15},
 ];
-var gpioBip = 21;
+var gpioBip = 40;
 
 var init = function() {
-  gpio.setMode(gpio.MODE_BCM);
+  gpio.setMode(gpio.MODE_RPI);
   _.each(gpiosLedArray, function(gpiosLed) {
-    gpio.setup(gpiosLed.red, gpio.DIR_OUT, function() {
-      gpio.write(gpiosLed.red, true);
+    gpio.setup(gpiosLed.red, gpio.DIR_OUT, function(ret) {
+      gpio.write(gpiosLed.red, false);
     });
-    gpio.setup(gpiosLed.green, gpio.DIR_OUT, function() {
-      gpio.write(gpiosLed.green, true);
+    gpio.setup(gpiosLed.green, gpio.DIR_OUT, function(ret) {
+      gpio.write(gpiosLed.green, false);
+    });
+    gpio.setup(gpiosLed.blue, gpio.DIR_OUT, function(ret) {
+      gpio.write(gpiosLed.blue, false);
     });
   });
 };
@@ -57,7 +61,7 @@ var setLed = function(pin, status) {
 
 var setLeds = function(statusArray) {
   _.each(statusArray, function(status, index) {
-    if (index > gpiosLedArray.length) { return false; }
+    if (index >= gpiosLedArray.length) { return false; }
     console.log(status.build, index);
     switch (status.build) {
       case STATUS.NO_TESTS:
@@ -81,7 +85,7 @@ var setLeds = function(statusArray) {
 };
 
 var setBip = function(bool) {
-  gpio.write(gpioBip, bool);
+  // gpio.write(gpioBip, bool);
 };
 
 exports.init = init;
