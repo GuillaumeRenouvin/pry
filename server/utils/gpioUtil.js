@@ -10,7 +10,6 @@ var gpiosLedArray = [
   {red: 22, green: 32, blue:36},
   {red: 11, green: 13, blue:15},
 ];
-var gpioBip = 40;
 
 var init = function() {
   gpio.setMode(gpio.MODE_RPI);
@@ -43,7 +42,7 @@ var setLed = function(pin, status) {
       break;
     case STATUS.FAILED:
       gpio.write(pin.green, false);
-      gpio.write(pin.cdred, true);
+      gpio.write(pin.red, true);
       gpio.write(pin.blue, false);
       break;
     case STATUS.RUNNING:
@@ -84,11 +83,6 @@ var setLeds = function(statusArray) {
   }
 };
 
-var setBip = function(bool) {
-  // gpio.write(gpioBip, bool);
-};
-
 exports.init = init;
 exports.stop = stop;
 exports.setLeds = setLeds;
-exports.setBip = setBip;
