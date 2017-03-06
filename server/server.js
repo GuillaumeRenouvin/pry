@@ -9,11 +9,19 @@ var fs = require('fs');
 var _ = require('lodash');
 var apiUtil = require('./utils/apiUtil.js');
 var gpioUtil = require('./utils/gpioUtil.js');
+var https = require('https');
+var sslConfig = require('./ssl-config');
 
 var app = module.exports = loopback();
+var options = {
+  key: sslConfig.privateKey,
+  cert: sslConfig.certificate
+};
 
 app.start = function() {
-  return app.listen(function() {
+  var server = https.createServer(options, app);
+
+  return server.listen(function() {
     var baseUrl = app.get('url').replace(/\/$/, '');
     console.log('Web server listening at: %s', baseUrl);
 
