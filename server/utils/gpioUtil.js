@@ -2,7 +2,7 @@
 
 var gpio = require('rpi-gpio');
 var _ = require('lodash');
-var usonic = require('mmm-usonic');
+var moment = require('moment');
 
 var STATUS = require('../constants/status');
 
@@ -12,10 +12,11 @@ var gpiosLedArray = [
   {red: 11, green: 13, blue:15},
 ];
 
-var sensor = usonic.createSensor(12, 16, 450);
+var sonarGpios = { trigger: 33, echo: 35},
 
 var init = function() {
   gpio.setMode(gpio.MODE_RPI);
+  // LEDs
   _.each(gpiosLedArray, function(gpiosLed) {
     gpio.setup(gpiosLed.red, gpio.DIR_OUT, function(ret) {
       gpio.write(gpiosLed.red, false);
@@ -28,13 +29,13 @@ var init = function() {
     });
   });
 
-  //Sonar
-  gpio.setup(gpioSonar.trigger, gpio.DIR_OUT, function(ret) {
-    gpio.write(gpioSonar.trigger, false);
-  });
-  gpio.setup(gpioSonar.echo, gpio.DIR_IN, function(ret) {
-    gpio.write(gpioSonar.echo, false);
-  });
+  // // Sonar
+  // gpio.setup(sonarGpios.trigger, gpio.DIR_OUT, function(ret) {
+  //   gpio.write(sonarGpios.trigger, false);
+  // });
+  // gpio.setup(sonarGpios.echo, gpio.DIR_IN, function(ret) {
+  //   gpio.write(sonarGpios.echo, false);
+  // });
 };
 
 var stop = function(process) {
@@ -94,11 +95,35 @@ var setLeds = function(statusArray) {
   }
 };
 
-var getSonarDistance = function() {
-  return sensor();
-};
+// var getSonarDistance = function() {
+//   // Sends 10us pulse to trigger
+//   gpio.write(sonarGpios.trigger, true);
+//   setTimeout(function() {
+//     gpio.write(sonarGpios.trigger, false);
+//
+//     var start = moment();
+//     while gpio.read(sonarGpios.echo, true);
+//   }, 1/100);
+// };
+//
+//
+// while GPIO.input(GPIO_ECHO)==0:
+//   start = time.time()
+//
+// while GPIO.input(GPIO_ECHO)==1:
+//   stop = time.time()
+//
+// # Calculate pulse length
+// elapsed = stop-start
+//
+// # Distance pulse travelled in that time is time
+// # multiplied by the speed of sound (cm/s)
+// distance = elapsed * 34000
+//
+// # That was the distance there and back so halve the value
+// distance = distance / 2
 
 exports.init = init;
 exports.stop = stop;
 exports.setLeds = setLeds;
-exports.getSonarDistance = getSonarDistance;
+// exports.getSonarDistance = getSonarDistance;
