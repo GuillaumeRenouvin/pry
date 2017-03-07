@@ -2,6 +2,7 @@
 
 var gpio = require('rpi-gpio');
 var _ = require('lodash');
+var usonic = require('mmm-usonic');
 
 var STATUS = require('../constants/status');
 
@@ -10,6 +11,8 @@ var gpiosLedArray = [
   {red: 22, green: 32, blue:36},
   {red: 11, green: 13, blue:15},
 ];
+
+var sensor = usonic.createSensor(12, 16, 450);
 
 var init = function() {
   gpio.setMode(gpio.MODE_RPI);
@@ -23,6 +26,14 @@ var init = function() {
     gpio.setup(gpiosLed.blue, gpio.DIR_OUT, function(ret) {
       gpio.write(gpiosLed.blue, false);
     });
+  });
+
+  //Sonar
+  gpio.setup(gpioSonar.trigger, gpio.DIR_OUT, function(ret) {
+    gpio.write(gpioSonar.trigger, false);
+  });
+  gpio.setup(gpioSonar.echo, gpio.DIR_IN, function(ret) {
+    gpio.write(gpioSonar.echo, false);
   });
 };
 
@@ -83,6 +94,11 @@ var setLeds = function(statusArray) {
   }
 };
 
+var getSonarDistance = function() {
+  return sensor();
+};
+
 exports.init = init;
 exports.stop = stop;
 exports.setLeds = setLeds;
+exports.getSonarDistance = getSonarDistance;

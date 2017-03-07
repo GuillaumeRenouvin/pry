@@ -112,10 +112,12 @@ app.get('/branch3', function(req, res) {
 app.get('/sonar', function(req, res) {
   res.write('<p>work in progress</p>');
 
+  res.write(gpioUtil.getSonarDistance() + '<br/>');
+
   setTimeout(function() {
     res.write('<p>work done</p>');
     res.end();
-  }, 4000);
+  }, 2000);
 });
 
 process.on('SIGINT', function() {
