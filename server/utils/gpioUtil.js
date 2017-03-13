@@ -1,78 +1,85 @@
 'use strict';
 
-var gpio = require('rpi-gpio');
+var Gpio = require('onoff').Gpio
 var _ = require('lodash');
+var pigpio = require('pigpio').Gpio;
 var moment = require('moment');
 
 var STATUS = require('../constants/status');
 
 var gpiosLedArray = [
-  {red: 12, green: 16, blue:18},
-  {red: 22, green: 32, blue:36},
-  {red: 11, green: 13, blue:15},
+  {red: new Gpio(18, 'low'), green: new Gpio(23, 'low'), blue:new Gpio(24, 'low')},
+  {red: new Gpio(25, 'low'), green: new Gpio(12, 'low'), blue:new Gpio(16, 'low')},
+  {red: new Gpio(17, 'low'), green: new Gpio(27, 'low'), blue:new Gpio(22, 'low')},
 ];
 
-var sonarGpios = { trigger: 33, echo: 35},
+var sonarGpios = { trigger: new pigpio(13, {mode: pigpio.OUTPUT}), echo: new pigpio(19, {mode: pigpio.INPUT, alert: true}) };
+var sonarLed = new pigpio(17, {mode: pigpio.OUTPUT});
+var dutyCycle = 0;
+sonarGpios.trigger.digitalWrite(0); // Make sure trigger is low
+var startSonar = false;
 
-var init = function() {
-  gpio.setMode(gpio.MODE_RPI);
-  // LEDs
-  _.each(gpiosLedArray, function(gpiosLed) {
-    gpio.setup(gpiosLed.red, gpio.DIR_OUT, function(ret) {
-      gpio.write(gpiosLed.red, false);
-    });
-    gpio.setup(gpiosLed.green, gpio.DIR_OUT, function(ret) {
-      gpio.write(gpiosLed.green, false);
-    });
-    gpio.setup(gpiosLed.blue, gpio.DIR_OUT, function(ret) {
-      gpio.write(gpiosLed.blue, false);
-    });
+// The number of microseconds it takes sound to travel 1cm at 20 degrees celcius
+var MICROSECDONDS_PER_CM = 1e6/34321;
+
+(function () {
+  var startTick;
+
+  sonarGpios.echo.on('alert', function (level, tick) {
+    var endTick, diff;
+
+    if (level == 1) {
+      startTick = tick;
+    } else {
+      endTick = tick;
+      diff = (endTick >> 0) - (startTick >> 0); // Unsigned 32 bit arithmetic
+
+      //SonarLed
+      diff = diff / 2 / MICROSECDONDS_PER_CM;
+      if(diff > 0.5 && diff < 100) {
+        console.log(diff);
+        sonarLed.pwmWrite(254-Math.round((diff*254)/100));
+      } else {
+        sonarLed.pwmWrite(0);
+      }
+    }
   });
+}());
 
-  // // Sonar
-  // gpio.setup(sonarGpios.trigger, gpio.DIR_OUT, function(ret) {
-  //   gpio.write(sonarGpios.trigger, false);
-  // });
-  // gpio.setup(sonarGpios.echo, gpio.DIR_IN, function(ret) {
-  //   gpio.write(sonarGpios.echo, false);
-  // });
-};
-
-var stop = function(process) {
-  gpio.destroy(function() {
-    console.log('All pins unexported');
-    process.exit();
-  });
-};
+setInterval(function () {
+  if (startSonar) {
+    sonarGpios.trigger.trigger(5, 1); // Set trigger high for 10 microseconds
+  }
+}, 200);
 
 var setLed = function(pin, status) {
   switch (status) {
     case STATUS.SUCCESS:
-      gpio.write(pin.green, true);
-      gpio.write(pin.red, false);
-      gpio.write(pin.blue, false);
+      pin.green.writeSync(1);
+      pin.red.writeSync(0);
+      pin.blue.writeSync(0);
       break;
     case STATUS.FAILED:
-      gpio.write(pin.green, false);
-      gpio.write(pin.red, true);
-      gpio.write(pin.blue, false);
+      pin.green.writeSync(0);
+      pin.red.writeSync(1);
+      pin.blue.writeSync(0);
       break;
     case STATUS.RUNNING:
-      gpio.write(pin.green, false);
-      gpio.write(pin.red, false);
-      gpio.write(pin.blue, true);
+      pin.green.writeSync(0);
+      pin.red.writeSync(0);
+      pin.blue.writeSync(1);
       break;
     case STATUS.EMPTY:
-      gpio.write(pin.green, false);
-      gpio.write(pin.red, false);
-      gpio.write(pin.blue, false);
+      pin.green.writeSync(0);
+      pin.red.writeSync(0);
+      pin.blue.writeSync(0);
       break;
   }
 };
 
 var setLeds = function(statusArray) {
   _.each(statusArray, function(status, index) {
-    if (index >= gpiosLedArray.length) { return false; }
+    if (index >= gpiosLedArray.length) { return 0; }
     console.log(status.build, index);
     switch (status.build) {
       case STATUS.NO_TESTS:
@@ -95,35 +102,9 @@ var setLeds = function(statusArray) {
   }
 };
 
-// var getSonarDistance = function() {
-//   // Sends 10us pulse to trigger
-//   gpio.write(sonarGpios.trigger, true);
-//   setTimeout(function() {
-//     gpio.write(sonarGpios.trigger, false);
-//
-//     var start = moment();
-//     while gpio.read(sonarGpios.echo, true);
-//   }, 1/100);
-// };
-//
-//
-// while GPIO.input(GPIO_ECHO)==0:
-//   start = time.time()
-//
-// while GPIO.input(GPIO_ECHO)==1:
-//   stop = time.time()
-//
-// # Calculate pulse length
-// elapsed = stop-start
-//
-// # Distance pulse travelled in that time is time
-// # multiplied by the speed of sound (cm/s)
-// distance = elapsed * 34000
-//
-// # That was the distance there and back so halve the value
-// distance = distance / 2
+var getSonarDistance = function() {
+  startSonar = !startSonar;
+};
 
-exports.init = init;
-exports.stop = stop;
 exports.setLeds = setLeds;
-// exports.getSonarDistance = getSonarDistance;
+exports.getSonarDistance = getSonarDistance;

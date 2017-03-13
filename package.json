@@ -22,10 +22,10 @@
     "loopback": "^3.0.0",
     "loopback-boot": "^2.6.5",
     "loopback-component-explorer": "^4.0.0",
-    "mmm-usonic": "^2.5.3",
+    "onoff": "^1.1.2",
     "path": "^0.12.7",
+    "pigpio": "^0.4.0",
     "request": "^2.79.0",
-    "rpi-gpio": "^0.7.0",
     "serve-favicon": "^2.0.1",
     "strong-error-handler": "^1.0.1"
   },

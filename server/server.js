@@ -29,7 +29,6 @@ app.start = function() {
       console.log('Browse your REST API at %s%s', baseUrl, explorerPath);
     }
   });
-  gpioUtil.init();
   return server;
 };
 
@@ -110,18 +109,13 @@ app.get('/branch3', function(req, res) {
 });
 
 app.get('/sonar', function(req, res) {
-  res.write('<p>work in progress</p>');
-
-  res.write(gpioUtil.getSonarDistance() + '<br/>');
-
-  setTimeout(function() {
-    res.write('<p>work done</p>');
-    res.end();
-  }, 2000);
-});
-
-process.on('SIGINT', function() {
-  gpioUtil.stop(process);
+  gpioUtil.getSonarDistance();
+  // res.write('<p>work in progress</p>');
+  // res.write(gpioUtil.getSonarDistance() + '<br/>');
+  // setTimeout(function() {
+  //   res.write('<p>work done</p>');
+  //   res.end();
+  // }, 2000);
 });
 
 boot(app, __dirname, function(err) {
