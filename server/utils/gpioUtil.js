@@ -2,7 +2,6 @@
 
 var Gpio = require('onoff').Gpio
 var _ = require('lodash');
-var pigpio = require('pigpio').Gpio;
 var moment = require('moment');
 
 var STATUS = require('../constants/status');
@@ -13,44 +12,7 @@ var gpiosLedArray = [
   {red: new Gpio(17, 'low'), green: new Gpio(27, 'low'), blue:new Gpio(22, 'low')},
 ];
 
-var sonarGpios = { trigger: new pigpio(13, {mode: pigpio.OUTPUT}), echo: new pigpio(19, {mode: pigpio.INPUT, alert: true}) };
-var sonarLed = new pigpio(17, {mode: pigpio.OUTPUT});
-var dutyCycle = 0;
-sonarGpios.trigger.digitalWrite(0); // Make sure trigger is low
 var startSonar = false;
-
-// The number of microseconds it takes sound to travel 1cm at 20 degrees celcius
-var MICROSECDONDS_PER_CM = 1e6/34321;
-
-(function () {
-  var startTick;
-
-  sonarGpios.echo.on('alert', function (level, tick) {
-    var endTick, diff;
-
-    if (level == 1) {
-      startTick = tick;
-    } else {
-      endTick = tick;
-      diff = (endTick >> 0) - (startTick >> 0); // Unsigned 32 bit arithmetic
-
-      //SonarLed
-      diff = diff / 2 / MICROSECDONDS_PER_CM;
-      if(diff > 0.5 && diff < 100) {
-        console.log(diff);
-        sonarLed.pwmWrite(254-Math.round((diff*254)/100));
-      } else {
-        sonarLed.pwmWrite(0);
-      }
-    }
-  });
-}());
-
-setInterval(function () {
-  if (startSonar) {
-    sonarGpios.trigger.trigger(5, 1); // Set trigger high for 10 microseconds
-  }
-}, 200);
 
 var setLed = function(pin, status) {
   switch (status) {
