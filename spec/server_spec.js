@@ -5,9 +5,4 @@ describe('Server tests', function() {
     var bool = true;
     expect(bool).toBe(true);
   });
-
-  it('failure test', function() {
-    var bool = true;
-    expect(bool).toBe(false);
-  });
 });
